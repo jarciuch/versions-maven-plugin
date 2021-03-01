@@ -190,7 +190,7 @@ public class DisplayPluginUpdatesMojo
                         try( Reader reader = ReaderFactory.newXmlReader( superPom ) )
                         {
                             StringBuilder buf = new StringBuilder( IOUtil.toString( reader ) );
-                            ModifiedPomXMLEventReader pom = newModifiedPomXER( buf );
+                            ModifiedPomXMLEventReader pom = newModifiedPomXER( buf, superPom.toString() );
 
                             Pattern pathRegex = Pattern.compile( "/project(/profiles/profile)?"
                                 + "((/build(/pluginManagement)?)|(/reporting))" + "/plugins/plugin" );
@@ -574,7 +574,7 @@ public class DisplayPluginUpdatesMojo
         else
         {
             logLine( false, "The following plugin updates are available:" );
-            for ( String update : pluginUpdates )
+            for ( String update : new TreeSet<>(pluginUpdates) )
             {
                 logLine( false, update );
             }
@@ -589,7 +589,7 @@ public class DisplayPluginUpdatesMojo
         else
         {
             getLog().warn( "The following plugins do not have their version specified:" );
-            for ( String lockdown : pluginLockdowns )
+            for ( String lockdown : new TreeSet<>(pluginLockdowns) )
             {
                 getLog().warn( lockdown );
             }
@@ -769,7 +769,7 @@ public class DisplayPluginUpdatesMojo
                 try
                 {
                     Set<String> withVersionSpecified =
-                        findPluginsWithVersionsSpecified( new StringBuilder( writer.toString() ) );
+                        findPluginsWithVersionsSpecified( new StringBuilder( writer.toString() ), parentProject.getFile().getAbsolutePath() );
 
                     Map<String, String> map = getPluginManagement( interpolatedModel );
                     map.keySet().retainAll( withVersionSpecified );
@@ -850,20 +850,21 @@ public class DisplayPluginUpdatesMojo
     private Set<String> findPluginsWithVersionsSpecified( MavenProject project )
         throws IOException, XMLStreamException
     {
-        return findPluginsWithVersionsSpecified( PomHelper.readXmlFile( project.getFile() ) );
+        return findPluginsWithVersionsSpecified( PomHelper.readXmlFile( project.getFile() ), project.getFile().getAbsolutePath() );
     }
 
     /**
      * Returns a set of Strings which correspond to the plugin coordinates where there is a version specified.
      *
      * @param pomContents The project to get the plugins with versions specified.
+     * @param path Path that points to the source of the XML
      * @return a set of Strings which correspond to the plugin coordinates where there is a version specified.
      */
-    private Set<String> findPluginsWithVersionsSpecified( StringBuilder pomContents )
+    private Set<String> findPluginsWithVersionsSpecified( StringBuilder pomContents, String path )
         throws IOException, XMLStreamException
     {
         Set<String> result = new HashSet<>();
-        ModifiedPomXMLEventReader pom = newModifiedPomXER( pomContents );
+        ModifiedPomXMLEventReader pom = newModifiedPomXER( pomContents, path );
 
         Pattern pathRegex = Pattern.compile( "/project(/profiles/profile)?"
             + "((/build(/pluginManagement)?)|(/reporting))" + "/plugins/plugin" );

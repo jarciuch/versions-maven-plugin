@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -181,6 +181,18 @@ public abstract class AbstractVersionsDependencyUpdaterMojo
     {
         return excludeReactor;
     }
+
+    /**
+     * Should the dependency be updated itself or is it handled by properties.
+     * 
+     * @param dependency
+     * @return true if the version starts with '${'
+     * @since 2.8
+     */
+    protected boolean isHandledByProperty(Dependency dependency) {
+		String version = dependency.getVersion();
+		return version.startsWith("${");
+	}
 
     /**
      * Try to find the dependency artifact that matches the given dependency.
